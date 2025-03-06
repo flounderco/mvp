@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Projection</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Scenario selection dropdown -->
+    <select id="scenario" onchange="updateChart()">
+        <option value="0.15">Base (15%)</option>
+        <option value="0.20">Upside (20%)</option>
+        <option value="0.10">Downside (10%)</option>
+    </select>
+
+    <!-- Chart canvas -->
+    <div id="chart-container" style="position: relative;">
+        <canvas id="revenueChart"></canvas>
+    </div>
+
+    <script>
+        // Defining the labels for the x-axis
+        var labels = [1, 2, 3, 4, 5];
+
+        // Getting the context of the canvas to draw the chart
+        var ctx = document.getElementById('revenueChart').getContext('2d');
+
+        // Creating the chart with initial settings
+        var chart = new Chart(ctx, {
+            type: 'line',  // Line chart type
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Projected Revenue',
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Function to calculate projected revenue based on growth rate
+        function calculateRevenue(rate) {
+            var revenue = [];
+            var initialRevenue = 100;
+
+            // Loop through the labels and calculate revenue for each period
+            for (var i = 0; i < labels.length; i++) {
+                revenue.push(initialRevenue * Math.pow(1 + rate, i));
+            }
+
+            return revenue;
+        }
+
+        // Function to update the chart with the selected scenario
+        function updateChart() {
+            var selectedRate = parseFloat(document.getElementById('scenario').value);
+            var newRevenue = calculateRevenue(selectedRate);
+
+            // Update the chart's data
+            chart.data.datasets[0].data = newRevenue;
+            chart.update();  // Redraw the chart
+        }
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    // Initialize the chart with the default scenario (Base 15%)
+        updateChart();
+    </script>
+</body>
+</html>
