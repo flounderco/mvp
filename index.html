@@ -1,79 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="styles.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Revenue Projection</title>
+    <title>Chart.js with Excel Data</title>
+    <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- Scenario selection dropdown -->
-    <select id="scenario" onchange="updateChart()">
-        <option value="0.15">Base (15%)</option>
-        <option value="0.20">Upside (20%)</option>
-        <option value="0.10">Downside (10%)</option>
-    </select>
+    <h1>Upload Excel File</h1>
+    <input type="file" id="excelFile" accept=".xlsx">
+    <button onclick="uploadFile()">Upload</button>
 
-    <!-- Chart canvas -->
-    <div id="chart-container" style="position: relative;">
-        <canvas id="revenueChart"></canvas>
+    <div id="chart-container">
+        <canvas id="myChart"></canvas>
     </div>
 
     <script>
-        // Defining the labels for the x-axis
-        var labels = [1, 2, 3, 4, 5];
+        let myChartInstance = null; // Store chart instance globally
 
-        // Getting the context of the canvas to draw the chart
-        var ctx = document.getElementById('revenueChart').getContext('2d');
+        async function uploadFile() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
 
-        // Creating the chart with initial settings
-        var chart = new Chart(ctx, {
-            type: 'line',  // Line chart type
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Projected Revenue',
-                    borderColor: 'blue',
-                    borderWidth: 2,
-                    fill: false
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { beginAtZero: true }
+            if (!file) {
+                alert('Please select a file.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('http://localhost:5000/upload', {  // Adjust URL if needed
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(`Error: ${data.error}`);
+                    return;
+                }
+
+                updateChart(data);
+
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                alert('Failed to upload or process file. Check the console.');
             }
-        });
-
-        // Function to calculate projected revenue based on growth rate
-        function calculateRevenue(rate) {
-            var revenue = [];
-            var initialRevenue = 100;
-
-            // Loop through the labels and calculate revenue for each period
-            for (var i = 0; i < labels.length; i++) {
-                revenue.push(initialRevenue * Math.pow(1 + rate, i));
-            }
-
-            return revenue;
         }
 
-        // Function to update the chart with the selected scenario
-        function updateChart() {
-            var selectedRate = parseFloat(document.getElementById('scenario').value);
-            var newRevenue = calculateRevenue(selectedRate);
+        function updateChart(data) {
+            const ctx = document.getElementById('myChart').getContext('2d');
 
-            // Update the chart's data
-            chart.data.datasets[0].data = newRevenue;
-            chart.update();  // Redraw the chart
+            if (myChartInstance) {
+                myChartInstance.destroy();
+            }
+
+            const datasets = [];
+            const scenarioColors = {
+                'Base': 'rgba(54, 162, 235, 0.8)',    // Blue
+                'Upside': 'rgba(255, 99, 132, 0.8)',   // Red
+                'Downside': 'rgba(255, 205, 86, 0.8)'  // Yellow
+            };
+            const scenarioBorderColors = {
+                'Base': 'rgba(54, 162, 235, 1)',
+                'Upside': 'rgba(255, 99, 132, 1)',
+                'Downside': 'rgba(255, 205, 86, 1)'
+            };
+
+            for (let i = 0; i < data.scenarios.length; i++) {
+                const scenario = data.scenarios[i];
+                datasets.push({
+                    label: scenario,
+                    data: data.revenue_data[scenario],
+                    borderColor: scenarioBorderColors[scenario] || 'rgba(0, 0, 0, 1)',
+                    fill: false // Do not fill area under the lines
+                });
+            }
+
+            myChartInstance = new Chart(ctx, {
+                type: 'line', // Changed chart type to line
+                data: {
+                    labels: data.labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
         }
-        window.addEventListener('resize', function() {
-            myChart.resize();
-        });
-    // Initialize the chart with the default scenario (Base 15%)
-        updateChart();
     </script>
 </body>
 </html>
