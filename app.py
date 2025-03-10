@@ -4,7 +4,7 @@ import io
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/upload": {"origins": "http://localhost:3000"}})
 
 def calculate_revenue(initial_revenue, growth_rate, num_periods):
     revenue = [initial_revenue]
