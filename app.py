@@ -41,7 +41,6 @@ def upload_excel():
             for i, scenario in enumerate(scenarios):
 
                 growth_rate = growth_rates[i]
-                print(scenario)
                 revenue_data[scenario] = calculate_revenue(initial_revenue, growth_rate, len(labels)-1)
             
             data = {
