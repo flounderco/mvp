@@ -5,6 +5,23 @@ import './App.css';
 function App() {
   const [chartData, setChartData] = useState(null);
   const chartRef = useRef(null);
+  useEffect(() => {
+    fetchDefaultData();
+  }, []);
+
+  const fetchDefaultData = async () => {
+    try {
+        const response = await fetch('http://localhost:5000/default-data');
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        setChartData(data);
+    } catch (error) {
+        console.error('Error fetching default data:', error);
+        alert('Failed to fetch default data. Check the console.', error);
+    }
+  };
 
   const handleFileUpload = async (event) => {
       const file = event.target.files[0];

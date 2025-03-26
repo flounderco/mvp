@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
 import pandas as pd
 import io
+import os
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/upload": {"origins": "http://localhost:3000"}})
+CORS(app)
 
 def calculate_revenue(initial_revenue, growth_rate, num_periods):
     revenue = [initial_revenue]
@@ -12,6 +13,42 @@ def calculate_revenue(initial_revenue, growth_rate, num_periods):
         revenue.append(revenue[-1] * (1 + growth_rate))
     return revenue
 
+#Grabs the xlsx file by default, processes the data for the front end
+@app.route('/default-data', methods=['GET'])
+def get_default_data():
+    try:
+        default_file_path = os.path.join(os.path.dirname(__file__), 'MVP Data.xlsx')
+        df = pd.read_excel(default_file_path)
+
+        # Process the data as you do in the upload_excel function
+        labels = ['Historical']
+        future_cols = [col for col in df.columns if 'Future' in str(col) or 'Unnamed' in str(col)][:4]
+
+        for i, col in enumerate(future_cols):
+            labels.append(f'Future {i+1}')
+
+        initial_revenue = df.iloc[1, 2]
+
+        scenarios = ["Base", "Upside", "Downside"]
+        growth_rates = [float(df.iloc[1, 12]), float(df.iloc[2, 12]), float(df.iloc[3, 12])]
+
+        revenue_data = {}
+        for i, scenario in enumerate(scenarios):
+            growth_rate = growth_rates[i]
+            revenue_data[scenario] = calculate_revenue(initial_revenue, growth_rate, len(labels)-1)
+
+        data = {
+            'labels': labels,
+            'scenarios': scenarios,
+            'revenue_data': revenue_data,
+            'growth_rates': {scenario: rate for scenario, rate in zip(scenarios, growth_rates)}
+        }
+        print(data)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+#back end processing for user file upload
 @app.route('/upload', methods=['POST'])
 def upload_excel():
     if 'file' not in request.files:
