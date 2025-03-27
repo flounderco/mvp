@@ -1,16 +1,14 @@
 # MVP Data Visualization Project
 
-required libraries: Flask, pandas, openpyxl, flask_cors, chart.js
+requires Node.js and python
 
-pip install Flask pandas openpyxl flask_cors
-
-npm install chart.js ajv@latest ajv-keywords@latest
+python setup.py
 
 start the web server with:
 
 python app.py
 
-and then 
+and then
 
 cd client
 

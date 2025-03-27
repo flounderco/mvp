@@ -43,7 +43,7 @@ def get_default_data():
             'revenue_data': revenue_data,
             'growth_rates': {scenario: rate for scenario, rate in zip(scenarios, growth_rates)}
         }
-        print(data)
+
         return jsonify(data)
     except Exception as e:
         return jsonify({'error': str(e)})
